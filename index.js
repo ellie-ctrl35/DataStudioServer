@@ -25,6 +25,10 @@ mongoose
   .then(() => console.log("Connected to DB"))
   .catch((e) => console.error("DB connection error", e));
 
+app.use("/", (req, res) => {
+  res.send("Hello World");
+});  
+
 app.post("/register", async (req, res) => {
   const { username, email, password, phone, role } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
