@@ -26,7 +26,7 @@ mongoose
   .catch((e) => console.error("DB connection error", e));
 
 app.use("/", (req, res) => {
-  res.send("Hello World");
+  res.json("Hello World");
 });  
 
 app.post("/register", async (req, res) => {
