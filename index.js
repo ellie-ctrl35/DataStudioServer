@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const port = 8080;
+const port = 5000;
 const User = require("./models/User");
 const Report = require("./models/Report");
 const RealReport = require("./models/RealReport");
@@ -46,6 +46,7 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("credntials:", email, password)
     const user = await User.findOne({ email });
     if (!user) {
       res.json({ status: "error", error: "Invalid email/password" });
