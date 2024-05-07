@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const port = 5000;
+const port = 8080;
 const User = require("./models/User");
 const Report = require("./models/Report");
 const RealReport = require("./models/RealReport");
@@ -25,9 +25,7 @@ mongoose
   .then(() => console.log("Connected to DB"))
   .catch((e) => console.error("DB connection error", e));
 
-app.use("/", (req, res) => {
-  res.json("Hello World");
-});  
+ 
 
 app.post("/register", async (req, res) => {
   const { username, email, password, phone, role } = req.body;
