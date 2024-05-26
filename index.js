@@ -12,7 +12,7 @@ const jwt = require("jsonwebtoken");
 
 app.use(
   cors({
-    origin: ["http://localhost:3000","http://localhost:3001"],
+    origin: ["http://localhost:3000", "http://localhost:3001"],
     credentials: true,
   })
 );
@@ -25,7 +25,7 @@ mongoose
   .then(() => console.log("Connected to DB"))
   .catch((e) => console.error("DB connection error", e));
 
- 
+
 
 app.post("/register", async (req, res) => {
   const { username, email, password, phone, role } = req.body;
@@ -155,6 +155,23 @@ app.get("/getallrequests", async (req, res) => {
   }
 });
 
+app.put('/sendreport/:id', async (req, res) => {
+  const { sendTo } = req.body;
+  try {
+      const report = await RealReport.findById(req.params.id);
+      if (!report) {
+          return res.status(404).send({ message: "Report not found" });
+      }
+      report.sent = true;
+      report.sendTo = sendTo;
+      await report.save();
+      res.status(200).send({ message: "Report sent successfully" });
+  } catch (error) {
+      res.status(500).send({ message: "Error sending report", error });
+  }
+});
+
+
 app.get("/getallengineers", async (req, res) => {
   try {
     const engineers = await User.find({ role: "engineer" });
@@ -198,7 +215,7 @@ app.post("/assignrequest", async (req, res) => {
 app.get("/getassignedrequest", async (req, res) => {
   const { name } = req.query; // Now using req.query instead of req.body
   try {
-    const AssignedRequest = await Report.find({ AssignTo: name , status:"Pending"});
+    const AssignedRequest = await Report.find({ AssignTo: name, status: "Pending" });
     res.status(200).json({ status: "success", data: AssignedRequest });
   } catch (error) {
     console.error(error); // Logging the error to the console
@@ -209,76 +226,78 @@ app.get("/getassignedrequest", async (req, res) => {
 });
 
 app.post("/createreport", async (req, res) => {
-    try {
-      const {
-        Engineer,
-        FacilityName,
-        EquipmentName,
-        SerialNumber,
-        modelNumber,
-        ProblemDesc,
-        WorkDone,
-        FurtherWorks,
-        FurtherWorkDesc,
-        type,
-        requestId,
-      } = req.body;
-      
-      // Create the report
-      const thereport = new RealReport({
-        Engineer,
-        FacilityName,
-        EquipmentName,
-        SerialNumber,
-        modelNumber,
-        ProblemDesc,
-        WorkDone,
-        FurtherWorks,
-        FurtherWorkDesc,
-        type,
-        requestId,
-      });
-      const realReport = await thereport.save();
-  
-      // Update the request status if requestId is provided
-      let updateResult = {};
-      if (requestId) {
-        updateResult = await Report.updateOne(
-          { _id: requestId },
-          { $set: { status: "done" } }
-        );
-      }
-  
-      // Send a single response indicating the report creation
-      // and optionally the update operation result
-      res.status(201).json({ 
-        status: "success", 
-        data: realReport, 
-        updateResult: requestId ? updateResult : undefined
-      });
-    } catch (error) {
-      console.error(error); // Log the error for debugging
-      if (error.code === 11000) {
-        res.status(400).json({
-          status: "error",
-          message: "Duplicate key error",
-          details: error.message,
-        });
-      } else {
-        res.status(500).json({
-          status: "error",
-          message: "Internal Server Error",
-          error: error.message,
-        });
-      }
+  try {
+    const {
+      Engineer,
+      FacilityName,
+      EquipmentName,
+      SerialNumber,
+      modelNumber,
+      ProblemDesc,
+      WorkDone,
+      FurtherWorks,
+      FurtherWorkDesc,
+      type,
+      requestId,
+    } = req.body;
+
+    // Create the report
+    const thereport = new RealReport({
+      Engineer,
+      FacilityName,
+      EquipmentName,
+      SerialNumber,
+      modelNumber,
+      ProblemDesc,
+      WorkDone,
+      FurtherWorks,
+      FurtherWorkDesc,
+      type,
+      requestId,
+      sent: false,
+      sendTo
+    });
+    const realReport = await thereport.save();
+
+    // Update the request status if requestId is provided
+    let updateResult = {};
+    if (requestId) {
+      updateResult = await Report.updateOne(
+        { _id: requestId },
+        { $set: { status: "done" } }
+      );
     }
+
+    // Send a single response indicating the report creation
+    // and optionally the update operation result
+    res.status(201).json({
+      status: "success",
+      data: realReport,
+      updateResult: requestId ? updateResult : undefined
+    });
+  } catch (error) {
+    console.error(error); // Log the error for debugging
+    if (error.code === 11000) {
+      res.status(400).json({
+        status: "error",
+        message: "Duplicate key error",
+        details: error.message,
+      });
+    } else {
+      res.status(500).json({
+        status: "error",
+        message: "Internal Server Error",
+        error: error.message,
+      });
+    }
+  }
 });
 
-app.get('/getcreatedreports',async(req,res)=>{
-  const {name}= req.query;
+app.get('/getcreatedreports', async (req, res) => {
+  const { name } = req.query;
   try {
-    const CreatedReport = await RealReport.find({ Engineer: name});
-    res.status(200).json({ status: "success", data: CreatedReport});
+    const CreatedReport = await RealReport.find({ Engineer: name });
+    res.status(200).json({ status: "success", data: CreatedReport });
   } catch (error) {
     console.error(error); // Logging the error to the console
     res
@@ -287,10 +306,10 @@ app.get('/getcreatedreports',async(req,res)=>{
   }
 })
 
-app.get('/getallreports', async (req,res)=>{
+app.get('/getallreports', async (req, res) => {
   try {
     const AllReports = await RealReport.find();
-    res.status(200).json({status:"success",data: AllReports})
+    res.status(200).json({ status: "success", data: AllReports })
   } catch (error) {
     console.error(error); // Logging the error to the console
     res
@@ -299,12 +318,12 @@ app.get('/getallreports', async (req,res)=>{
   }
 })
 
-app.get('/getmyrequest', async (req,res) => {
-  const {author} = req.query;
+app.get('/getmyrequest', async (req, res) => {
+  const { author } = req.query;
   console.log(author);
   try {
-    const myRequests = await Report.find({author:author})
-    res.status(200).json({status:"ok",data:myRequests})
+    const myRequests = await Report.find({ author: author })
+    res.status(200).json({ status: "ok", data: myRequests })
   } catch (error) {
     console.error(error); // Logging the error to the console
     res
@@ -315,12 +334,12 @@ app.get('/getmyrequest', async (req,res) => {
 
 
 
-{/*routes for dashoard counts*/}
+{/*routes for dashoard counts*/ }
 
-app.get('/getcompletedtasks', async (req,res) => {
+app.get('/getcompletedtasks', async (req, res) => {
   try {
-    const completedTasks = await Report.find({status:"done"});
-    res.status(200).json({status:"ok",data:completedTasks.length})
+    const completedTasks = await Report.find({ status: "done" });
+    res.status(200).json({ status: "ok", data: completedTasks.length })
   } catch (error) {
     console.error(error); // Logging the error to the console
     res
@@ -329,10 +348,10 @@ app.get('/getcompletedtasks', async (req,res) => {
   }
 })
 
-app.get('/getuncompletedtasks', async (req,res) => {
+app.get('/getuncompletedtasks', async (req, res) => {
   try {
-    const completedTasks = await Report.find({status:"Pending"});
-    res.status(200).json({status:"ok",data:completedTasks.length})
+    const completedTasks = await Report.find({ status: "Pending" });
+    res.status(200).json({ status: "ok", data: completedTasks.length })
   } catch (error) {
     console.error(error); // Logging the error to the console
     res
@@ -341,10 +360,10 @@ app.get('/getuncompletedtasks', async (req,res) => {
   }
 })
 
-app.get('/getallreportscount', async (req,res)=>{
+app.get('/getallreportscount', async (req, res) => {
   try {
     const AllReports = await RealReport.find();
-    res.status(200).json({status:"success",data: AllReports.length})
+    res.status(200).json({ status: "success", data: AllReports.length })
   } catch (error) {
     console.error(error); // Logging the error to the console
     res
@@ -353,10 +372,10 @@ app.get('/getallreportscount', async (req,res)=>{
   }
 })
 
-app.get('/getallrequestscount', async (req,res)=>{
+app.get('/getallrequestscount', async (req, res) => {
   try {
     const AllReports = await Report.find();
-    res.status(200).json({status:"success",data: AllReports.length})
+    res.status(200).json({ status: "success", data: AllReports.length })
   } catch (error) {
     console.error(error); // Logging the error to the console
     res
@@ -396,7 +415,7 @@ app.get('/request-counts-last-10-days', async (req, res) => {
       },
       {
         $group: {
-          _id: { 
+          _id: {
             type: "$type",
             day: { $dayOfYear: "$createdAt" }
           },
@@ -427,7 +446,7 @@ app.get('/report-counts-last-10-days', async (req, res) => {
       },
       {
         $group: {
-          _id: { 
+          _id: {
             type: "$type",
             day: { $dayOfYear: "$createdAt" }
           },
@@ -450,7 +469,7 @@ app.get('/monthly-report-counts', async (req, res) => {
     const monthlyCounts = await Report.aggregate([
       {
         $group: {
-          _id: { month: { $month: "$createdAt" }},
+          _id: { month: { $month: "$createdAt" } },
           count: { $sum: 1 }
         }
       },
@@ -469,7 +488,7 @@ app.get('/monthly-report-counts', async (req, res) => {
     res.status(500).json({ message: 'Error fetching monthly report counts', error: error.message });
   }
 });
-  
+
 app.listen(port, () => {
   console.log(`Server started on http://localhost:${port}`);
 });
