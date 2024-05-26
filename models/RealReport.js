@@ -46,7 +46,16 @@ const RealReportSchema = new mongoose.Schema({
     requestId:{
         type: String,
         required: true
+    },
+    sent:{
+        type: Boolean,
+        default: false
+    },
+    sendTo:{
+        type: String,
+        default: "admin"
     }
+    
 },{timestamps: true}
 );
 
