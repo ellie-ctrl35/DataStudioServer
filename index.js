@@ -171,6 +171,21 @@ app.put('/sendreport/:id', async (req, res) => {
   }
 });
 
+app.get("/getofficialreports", async (req, res) => {
+  const { name } = req.query;
+  try {
+    const reports = await RealReport.find({ sendTo: name });
+    res.json({ status: "ok", data: reports });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+});
+
+
 
 app.get("/getallengineers", async (req, res) => {
   try {
